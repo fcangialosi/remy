@@ -46,6 +46,10 @@ public:
 		const bool trace = false,
 		const double carefulness = 1) const;
 
+  bool evaluate_in_isolation( T & run_actions,
+    const bool trace = false,
+    const double carefulness = 1) const;
+
   static Evaluator::Outcome parse_problem_and_evaluate( const ProblemBuffers::Problem & problem );
 
   static Outcome score( T & run_actions,
@@ -53,6 +57,13 @@ public:
 			const std::vector<NetConfig> & configs,
 			const bool trace,
 			const unsigned int ticks_to_run );
+
+  static bool evaluate_in_isolation( T & run_actions,
+			const unsigned int prng_seed,
+			const std::vector<NetConfig> & configs,
+			const bool trace,
+			const unsigned int ticks_to_run );
+
 };
 
 #endif

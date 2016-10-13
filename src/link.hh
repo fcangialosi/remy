@@ -58,6 +58,8 @@ public:
       _buffer.pop_back();
     }
   }
+
+  unsigned int buffer_size( void ) const { return _buffer.size(); }
 };
 
 #endif

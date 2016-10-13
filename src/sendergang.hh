@@ -49,6 +49,18 @@ public:
       id( s_id )
   {}
 
+  SwitchedSender( const unsigned int s_id,
+		  const double & start_tick,
+		  const SenderType & s_sender,
+      const bool start_on )
+    : internal_tick( 0 ),
+      next_switch_tick( start_tick ),
+      sender( s_sender ),
+      utility(),
+      sending( start_on ),
+      id( s_id )
+  {}
+
   virtual ~SwitchedSender() {}
 };
 
@@ -111,6 +123,37 @@ public:
   {
     SwitchedSender<SenderType>::next_switch_tick = std::numeric_limits<double>::max();
   } /* don't switch */
+
+  using SwitchedSender<SenderType>::SwitchedSender;    
+};
+
+template <class SenderType>
+class AlwaysOnSender : public SwitchedSender<SenderType> {
+public:
+  AlwaysOnSender( const unsigned int s_id,
+		  const double & start_tick,
+		  const SenderType & s_sender )
+    : SwitchedSender<SenderType>( s_id, 
+                     start_tick,
+                     s_sender,
+                     true )
+    {
+      SwitchedSender<SenderType>::next_switch_tick = std::numeric_limits<double>::max();
+    }
+
+  template <class NextHop>
+  void tick( NextHop & next, Receiver & rec,
+	     const double & tickno,
+	     const unsigned int num_sending,
+	     PRNG & prng,
+	     Exponential & start_distribution );
+
+  void switcher( const double &,
+		 PRNG &,
+		 Exponential &,
+		 Exponential &,
+		 const unsigned int ) override
+  {}
 
   using SwitchedSender<SenderType>::SwitchedSender;    
 };

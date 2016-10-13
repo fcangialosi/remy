@@ -100,6 +100,31 @@ Evaluator< WhiskerTree >::Outcome Evaluator< WhiskerTree >::score( WhiskerTree &
 }
 
 template <>
+bool Evaluator< WhiskerTree >::evaluate_in_isolation( WhiskerTree & run_whiskers,
+                                                      const unsigned int prng_seed,
+                                                      const vector<NetConfig> & configs,
+                                                      const bool trace,            
+                                                      const unsigned int ticks_to_run ) 
+{
+  PRNG run_prng( prng_seed );
+
+  run_whiskers.reset_counts();
+
+  unsigned int bdp, max_queue, queue_size;
+  for ( auto &x : configs ) {
+    Network<SenderGang<Rat, AlwaysOnSender<Rat>>,
+      SenderGang<Rat, AlwaysOnSender<Rat>>> network1( Rat( run_whiskers, trace ), run_prng, x, 1 );
+    bdp = (x.link_ppt * x.delay);
+    max_queue = (5 * bdp);
+    queue_size = network1.run_simulation_until_queue_limit( ticks_to_run, max_queue );
+    if (queue_size >= max_queue) return true;
+  }
+
+  return false;
+}
+              
+
+template <>
 Evaluator< FinTree >::Outcome Evaluator< FinTree >::score( FinTree & run_fins,
              const unsigned int prng_seed,
              const vector<NetConfig> & configs,
@@ -126,6 +151,31 @@ Evaluator< FinTree >::Outcome Evaluator< FinTree >::score( FinTree & run_fins,
   the_outcome.used_actions = run_fins;
 
   return the_outcome;
+}
+  
+template <>
+bool Evaluator< FinTree >::evaluate_in_isolation( FinTree & run_fins,
+                                                      const unsigned int prng_seed,
+                                                      const vector<NetConfig> & configs,
+                                                      const bool trace,            
+                                                      const unsigned int ticks_to_run ) 
+{
+  PRNG run_prng( prng_seed );
+  unsigned int fish_prng_seed( run_prng() );
+
+  run_fins.reset_counts();
+
+  unsigned int bdp, max_queue, queue_size;
+  for ( auto &x : configs ) {
+    Network<SenderGang<Fish, AlwaysOnSender<Fish>>,
+      SenderGang<Fish, AlwaysOnSender<Fish>>> network1( Fish( run_fins, fish_prng_seed, trace ), run_prng, x, 1 );
+    bdp = (x.link_ppt * x.delay);
+    max_queue = (5 * bdp);
+    queue_size = network1.run_simulation_until_queue_limit( ticks_to_run, max_queue );
+    if (queue_size >= max_queue) return true;
+  }
+
+  return false;
 }
 
 template <>
@@ -195,6 +245,13 @@ typename Evaluator< T >::Outcome Evaluator< T >::score( T & run_actions,
 				     const bool trace, const double carefulness ) const
 {
   return score( run_actions, _prng_seed, _configs, trace, _tick_count * carefulness );
+}
+
+template <typename T>
+bool Evaluator< T >::evaluate_in_isolation( T & run_actions,
+             const bool trace, const double carefulness ) const 
+{
+  return evaluate_in_isolation( run_actions, _prng_seed, _configs, trace, _tick_count * carefulness );
 }
 
 

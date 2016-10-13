@@ -33,6 +33,21 @@ Network<Gang1Type, Gang2Type>::Network( const typename Gang1Type::Sender & examp
 }
 
 template <class Gang1Type, class Gang2Type>
+Network<Gang1Type, Gang2Type>::Network( const typename Gang1Type::Sender & example_sender1,
+					PRNG & s_prng,
+					const NetConfig & config,
+          double num_senders)
+  : _prng( s_prng ),
+    _senders( Gang1Type( config.mean_on_duration, config.mean_off_duration, num_senders, example_sender1, _prng ),
+	      Gang2Type() ),
+    _link( config.link_ppt, config.buffer_size ),
+    _delay( config.delay ),
+    _rec(),
+    _tickno( 0 )
+{
+}
+
+template <class Gang1Type, class Gang2Type>
 void Network<Gang1Type, Gang2Type>::tick( void )
 {
   _senders.tick( _link, _rec, _tickno );
@@ -57,6 +72,28 @@ void Network<Gang1Type, Gang2Type>::run_simulation( const double & duration )
 
     tick();
   }
+}
+
+template <class Gang1Type, class Gang2Type>
+unsigned int Network<Gang1Type, Gang2Type>::run_simulation_until_queue_limit( const double & duration,
+                                                                              const unsigned int max_queue )
+{
+  assert( _tickno == 0 );
+
+  while ( _tickno < duration) {
+    /* find element with soonest event */
+    _tickno = min( min( _senders.next_event_time( _tickno ),
+			_link.next_event_time( _tickno ) ),
+		   min( _delay.next_event_time( _tickno ),
+			_rec.next_event_time( _tickno ) ) );
+
+    if ( _tickno > duration || _link.buffer_size() >= max_queue) break;
+    assert( _tickno < std::numeric_limits<double>::max() );
+
+    tick();
+  }
+
+  return _link.buffer_size();
 }
 
 template <class Gang1Type, class Gang2Type>

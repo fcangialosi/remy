@@ -86,7 +86,11 @@ public:
 
   Network( const typename Gang1Type::Sender & example_sender1, PRNG & s_prng, const NetConfig & config );
 
+  Network( const typename Gang1Type::Sender & example_sender1, PRNG & s_prng, const NetConfig & config, double num_senders );
+
   void run_simulation( const double & duration );
+
+  unsigned int run_simulation_until_queue_limit( const double & duration, const unsigned int max_queue );
 
   void run_simulation_with_logging_until( const double tick_limit, SimulationRunData &, const double interval );
 

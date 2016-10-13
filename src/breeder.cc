@@ -75,6 +75,28 @@ void ActionImprover< T, A >::evaluate_replacements(const vector<A> &replacements
 }
 
 template <typename T, typename A>
+void ActionImprover< T, A >::find_bad_replacements(const vector<A> &replacements,
+    vector< pair< const A &, future< pair< bool, bool > > > > &scores,
+    const double carefulness ) 
+{
+  for ( const auto & test_replacement : replacements ) {
+    /* need to fire off a new thread to evaluate */
+    scores.emplace_back( test_replacement,
+                         async( launch::async, [] ( const Evaluator< T > & e,
+                                                    const A & r,
+                                                    const T & tree,
+                                                    const double carefulness ) {
+                                  T replaced_tree( tree );
+                                  const bool found_replacement __attribute((unused)) = replaced_tree.replace( r );
+                                  assert( found_replacement );
+                                  return make_pair( true, e.evaluate_in_isolation( replaced_tree, false, carefulness ) ); },
+                                eval_, test_replacement, tree_, carefulness ) );
+  } 
+}
+
+
+
+template <typename T, typename A>
 vector<A> ActionImprover< T, A >::early_bail_out( const vector< A > &replacements,
         const double carefulness, const double quantile_to_keep )
 {  
@@ -110,14 +132,44 @@ vector<A> ActionImprover< T, A >::early_bail_out( const vector< A > &replacement
 }
 
 template <typename T, typename A>
+vector<A> ActionImprover< T, A >::early_bail_out_queue( const vector< A > &replacements,
+        const double carefulness)
+{  
+  vector< pair< const A &, future< pair< bool, bool > > > > scores;
+  find_bad_replacements( replacements, scores, carefulness );
+  
+  accumulator_t_right acc(
+     tag::tail< boost::accumulators::right >::cache_size = scores.size() );
+  vector<bool> raw_scores;
+  for ( auto & x : scores ) {
+    const bool is_bad( x.second.get().second );
+    acc( is_bad );
+    raw_scores.push_back( is_bad );
+  }
+  
+  /* Discard replacements below threshold */
+  vector<A> top_replacements;
+  for ( uint i = 0; i < scores.size(); i ++ ) {
+    const A & replacement( scores.at( i ).first );
+    const bool is_bad ( raw_scores.at( i ) );
+    if ( !is_bad ) {
+      top_replacements.push_back( replacement );
+    }
+  }
+  return top_replacements;
+}
+
+template <typename T, typename A>
 double ActionImprover< T, A >::improve( A & action_to_improve )
 {
   auto replacements = get_replacements( action_to_improve );
   vector< pair< const A &, future< pair< bool, double > > > > scores;
 
-  /* Run for 10% simulation time to get estimates for the final score 
-     and discard bad performing ones early on. */
-  vector<A> top_replacements = early_bail_out( replacements, 0.1, 0.5 );
+  /* Run for 10% simulation time in isolation (1 sender always on) to see 
+   * how sender fills up the router buffer and discard those that are too
+   * passive or too aggressive early on */
+  vector<A> top_replacements = early_bail_out_queue( replacements, 0.1 );
+  cout << ">>> REMOVED " << (replacements.size() - top_replacements.size()) << endl;
 
   /* find best replacement */
   evaluate_replacements( top_replacements, scores, 1 );
