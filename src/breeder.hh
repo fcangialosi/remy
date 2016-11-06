@@ -9,6 +9,11 @@
 #include "configrange.hh"
 #include "evaluator.hh"
 
+struct OutcomeData
+{
+  double score;
+  double early_score;
+};
 struct BreederOptions
 {
   ConfigRange config_range = ConfigRange();
@@ -23,18 +28,20 @@ protected:
 
   T tree_;
 
-  std::unordered_map< A, double, boost::hash< A > > eval_cache_ {};
-
+  std::unordered_map< A, OutcomeData, boost::hash< A > > eval_cache_ {};
+  std::unordered_map< A, OutcomeData, boost::hash< A > > eval_cache_early {};
   double score_to_beat_;
 
   virtual std::vector< A > get_replacements( A & action_to_improve ) = 0;
-
-  void evaluate_replacements(const std::vector< A > &replacements,
+  void evaluate_for_bailout(const std::vector< A > &replacements,
+      std::vector< std::pair< const A &, std::future< std::pair< bool, OutcomeData > > > > &scores,
+      const double carefulness);
+  /*void evaluate_replacements(const std::vector< A > &replacements,
     std::vector< std::pair< const A &, std::future< std::pair< bool, double > > > > &scores,
     const double carefulness);
 
   std::vector< A > early_bail_out(const std::vector< A > &replacements,
-        const double carefulness, const double quantile_to_keep);
+        const double carefulness, const double quantile_to_keep);*/
 
 public:
   ActionImprover( const Evaluator<  T > & evaluator, const T & tree, 

@@ -11,6 +11,13 @@
 #include "random.hh"
 #include "answer.pb.h"
 
+struct BailoutLogging {
+    double score;
+    double early_score;
+    double early_max_queue_size;
+    double max_queue_size;
+};
+
 class SimulationRunData; // from simulationresults.hh
 
 class NetConfig
@@ -98,6 +105,7 @@ public:
 
   void run_simulation_until( const double tick_limit );
 
+  BailoutLogging run_simulation_bailout_logging( const double & duration );
   const SenderGangofGangs<Gang1Type, Gang2Type> & senders( void ) const { return _senders; }
 
   SenderGangofGangs<Gang1Type, Gang2Type> & mutable_senders( void ) { return _senders; }

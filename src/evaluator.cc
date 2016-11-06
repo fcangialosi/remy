@@ -74,6 +74,60 @@ ProblemBuffers::Problem Evaluator< FinTree >::DNA( const FinTree & fins ) const
   return ret;
 }
 
+template<>
+Evaluator< WhiskerTree >::Outcome Evaluator<WhiskerTree>::evaluate_for_bailout( WhiskerTree & run_whiskers, const unsigned int prng_seed, const vector<NetConfig> & configs, const bool trace, const unsigned int ticks_to_run )
+{
+  Evaluator::Outcome the_outcome;
+
+  PRNG run_prng( prng_seed );
+  run_whiskers.reset_counts();
+  BailoutLogging data;
+  for ( auto &x : configs ) {
+    Network<SenderGang<Rat, TimeSwitchedSender<Rat>>,
+      SenderGang<Rat, TimeSwitchedSender<Rat>>> network1( Rat( run_whiskers, trace ), run_prng, x );
+
+    data = network1.run_simulation_bailout_logging( ticks_to_run );
+    the_outcome.early_score += data.early_score;
+
+    the_outcome.score += data.score;
+
+    the_outcome.throughputs_delays.emplace_back( x, network1.senders().throughputs_delays() );
+  }
+
+  the_outcome.used_actions = run_whiskers;
+
+  return the_outcome;
+}
+
+template<>
+Evaluator< FinTree >::Outcome Evaluator< FinTree > ::evaluate_for_bailout( FinTree & run_fins,
+    const unsigned int prng_seed,
+    const vector<NetConfig> & configs,
+    const bool trace,
+    const unsigned int ticks_to_run )
+{
+  PRNG run_prng( prng_seed );
+  unsigned int fish_prng_seed( run_prng() );
+  run_fins.reset_counts();
+  BailoutLogging data;
+
+  Evaluator::Outcome the_outcome;
+  for (auto &x : configs ) {
+  Network<SenderGang<Fish, TimeSwitchedSender<Fish>>,
+    SenderGang<Fish, TimeSwitchedSender<Fish>>> network1( Fish( run_fins, fish_prng_seed, trace ), run_prng, x );
+
+  network1.run_simulation( ticks_to_run );
+  the_outcome.early_score += data.early_score;
+  the_outcome.score += data.score;
+
+  the_outcome.throughputs_delays.emplace_back( x, network1.senders().throughputs_delays() );
+
+  }
+
+  the_outcome.used_actions = run_fins;
+  return the_outcome;
+}
+
 template <>
 Evaluator< WhiskerTree >::Outcome Evaluator< WhiskerTree >::score( WhiskerTree & run_whiskers,
              const unsigned int prng_seed,
@@ -182,7 +236,7 @@ AnswerBuffers::Outcome Evaluator< T >::Outcome::DNA( void ) const
 
 template <typename T>
 Evaluator< T >::Outcome::Outcome( const AnswerBuffers::Outcome & dna )
-  : score( dna.score() ), throughputs_delays(), used_actions() {
+  : score( dna.score() ), early_score( 0 ), max_queue_early( 0 ), throughputs_delays(), used_actions() {
   for ( const auto &x : dna.throughputs_delays() ) {
     vector< pair< double, double > > tp_del;
     for ( const auto &result : x.results() ) {
@@ -193,6 +247,12 @@ Evaluator< T >::Outcome::Outcome( const AnswerBuffers::Outcome & dna )
   }
 }
 
+template <typename T>
+typename Evaluator< T >::Outcome Evaluator< T >::evaluate_for_bailout( T & run_actions,
+    const bool trace, const double carefulness ) const
+{
+  return evaluate_for_bailout( run_actions, _prng_seed, _configs, trace, _tick_count * carefulness );
+}
 template <typename T>
 typename Evaluator< T >::Outcome Evaluator< T >::score( T & run_actions,
 				     const bool trace, const double carefulness ) const

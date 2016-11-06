@@ -44,6 +44,40 @@ void Network<Gang1Type, Gang2Type>::tick( void )
 }
 
 template <class Gang1Type, class Gang2Type>
+BailoutLogging Network<Gang1Type, Gang2Type>::run_simulation_bailout_logging( const double & duration )
+{
+  // idea : run the simulation, but record what happens at 10 % of the time
+  // send this back to the simulation to print some statistics
+
+  BailoutLogging bailout;
+
+  // TODO: run the regular sender for all the time
+  // at 10 % of the evaluation time, stop and record the max queue size seen so far and the max size the queue has seen
+  assert ( _tickno == 0 );
+  bool early_written = false;
+  while ( _tickno < duration ) {
+    /* find element with the soonest event */
+    _tickno = min( min( _senders.next_event_time( _tickno ),
+       min(_link.next_event_time( _tickno ), _stochastic_loss.next_event_time( _tickno)) ),
+        min( _delay.next_event_time( _tickno ),
+          _rec.next_event_time( _tickno ) ) );
+
+     if ( (_tickno > .10 * duration) && !early_written ) {
+       early_written = true;
+       bailout.early_score = _senders.utility();
+     }
+
+    if ( _tickno > duration ) break;
+    assert( _tickno < std::numeric_limits<double>::max() );
+
+    tick();
+  }
+
+  bailout.score = _senders.utility();
+
+  return bailout;
+}
+template <class Gang1Type, class Gang2Type>
 void Network<Gang1Type, Gang2Type>::run_simulation( const double & duration )
 {
   assert( _tickno == 0 );
@@ -61,6 +95,7 @@ void Network<Gang1Type, Gang2Type>::run_simulation( const double & duration )
     tick();
   }
 }
+
 
 template <class Gang1Type, class Gang2Type>
 void Network<Gang1Type, Gang2Type>::run_simulation_until( const double tick_limit )

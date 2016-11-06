@@ -5,7 +5,7 @@
 #include <boost/accumulators/statistics/tail_quantile.hpp>
 
 #include "breeder.hh"
-
+#include "evaluator.hh"
 using namespace boost::accumulators;
 using namespace std;
 
@@ -48,14 +48,45 @@ ActionImprover< T, A >::ActionImprover( const Evaluator< T > & s_evaluator,
 {}
 
 template <typename T, typename A>
-void ActionImprover< T, A >::evaluate_replacements(const vector<A> &replacements,
-    vector< pair< const A &, future< pair< bool, double > > > > &scores,
-    const double carefulness ) 
+void ActionImprover< T, A >:: evaluate_for_bailout(const vector<A> &replacements,
+    vector< pair< const A &, future< pair< bool, OutcomeData > > > > &scores,
+    const double carefulness )
 {
+ // NOT IMPLEMENTED: will go through but run a double evaluation: one for 10% of the time, one for 100 % of the time, and print associated statistics
+
   for ( const auto & test_replacement : replacements ) {
-    if ( eval_cache_.find( test_replacement ) == eval_cache_.end() ) {
+    if ( eval_cache_early.find( test_replacement ) == eval_cache_early.end() ) {
       /* need to fire off a new thread to evaluate */
       scores.emplace_back( test_replacement,
+          async( launch::async, [] ( const Evaluator< T > & e,
+                                      const A & r,
+                                      const T & tree,
+                                      const double carefulness ) {
+                  OutcomeData data;
+                  T replaced_tree( tree );
+                  const bool found_replacement __attribute((unused)) = replaced_tree.replace( r );
+                  auto outcome( e.evaluate_for_bailout( replaced_tree, false, carefulness ) );
+                  data.score = outcome.score;
+                  data.early_score = outcome.early_score;
+                  return make_pair( true, data ); },
+                  eval_, test_replacement, tree_, carefulness ) );
+            } else {
+              scores.emplace_back( test_replacement,
+                  async( launch::deferred, [] ( const OutcomeData value ) {
+                    return make_pair( false, value ); }, eval_cache_early.at( test_replacement ) ) );
+            }
+    }
+}
+/*
+template <typename T, typename A>
+void ActionImprover< T, A >::evaluate_replacements(const vector<A> &replacements,
+    vector< pair< const A &, future< pair< bool, double > > > > &scores,
+    const double carefulness )
+{
+  for ( const auto & test_replacement : replacements ) {
+    if ( eval_cache_.find( test_replacement ) == eval_cache_.end() ) {*/
+      /* need to fire off a new thread to evaluate */
+      /*scores.emplace_back( test_replacement,
                            async( launch::async, [] ( const Evaluator< T > & e,
                                                       const A & r,
                                                       const T & tree,
@@ -65,15 +96,17 @@ void ActionImprover< T, A >::evaluate_replacements(const vector<A> &replacements
                                     assert( found_replacement );
                                     return make_pair( true, e.score( replaced_tree, false, carefulness ).score ); },
                                   eval_, test_replacement, tree_, carefulness ) );
-    } else {
-      /* we already know the score */
+    } else { 
+       we already know the score
       scores.emplace_back( test_replacement,
         async( launch::deferred, [] ( const double value ) {
                return make_pair( false, value ); }, eval_cache_.at( test_replacement ) ) );
     }
-  } 
+    // log stuff about what was just evaluated
+  }
 }
-
+*/
+/*
 template <typename T, typename A>
 vector<A> ActionImprover< T, A >::early_bail_out( const vector< A > &replacements,
         const double carefulness, const double quantile_to_keep )
@@ -90,14 +123,14 @@ vector<A> ActionImprover< T, A >::early_bail_out( const vector< A > &replacement
     raw_scores.push_back( score );
   }
   
-  /* Set the lower bound to be MAX_PERCENT_ERROR worse than the current best score */
+  // Set the lower bound to be MAX_PERCENT_ERROR worse than the current best score 
   double lower_bound = std::min( score_to_beat_ * (1 + MAX_PERCENT_ERROR), 
         score_to_beat_ * (1 - MAX_PERCENT_ERROR) );
-  /* Get the score at given quantile */
+  // Get the score at given quantile
   double quantile_bound = quantile( acc, quantile_probability = 1 - quantile_to_keep );
   double cutoff = std::max( lower_bound, quantile_bound );
 
-  /* Discard replacements below threshold */
+  // Discard replacements below threshold
   vector<A> top_replacements;
   for ( uint i = 0; i < scores.size(); i ++ ) {
     const A & replacement( scores.at( i ).first );
@@ -108,28 +141,32 @@ vector<A> ActionImprover< T, A >::early_bail_out( const vector< A > &replacement
   }
   return top_replacements;
 }
-
+*/
 template <typename T, typename A>
 double ActionImprover< T, A >::improve( A & action_to_improve )
 {
   auto replacements = get_replacements( action_to_improve );
-  vector< pair< const A &, future< pair< bool, double > > > > scores;
+  //vector< pair< const A &, future< pair< bool, double > > > > scores;
+  vector< pair< const A &, future< pair< bool, OutcomeData > > > > early_scores;
 
   /* Run for 10% simulation time to get estimates for the final score 
      and discard bad performing ones early on. */
-  vector<A> top_replacements = early_bail_out( replacements, 0.1, 0.5 );
-
   /* find best replacement */
-  evaluate_replacements( top_replacements, scores, 1 );
-  for ( auto & x : scores ) {
+  //vector<A> top_replacements = early_bail_outores
+  //evaluate_replacements( replacements, scores, 1 );
+  evaluate_for_bailout( replacements, early_scores, 1);
+
+  for ( auto & x : early_scores ) {
      const A & replacement( x.first );
      const auto outcome( x.second.get() );
      const bool was_new_evaluation( outcome.first );
-     const double score( outcome.second );
-
+     const OutcomeData data(outcome.second );
+     const double score( data.score );
+     const double early_score( data.early_score );
+     cout << "Action: " << replacement.str() << " -> 100%: " << score << " , 10%: " << early_score << endl;
      /* should we cache this result? */
      if ( was_new_evaluation ) {
-       eval_cache_.insert( make_pair( replacement, score ) );
+       eval_cache_early.insert( make_pair( replacement, data ) );
      }
 
      if ( score > score_to_beat_ ) {
@@ -138,7 +175,14 @@ double ActionImprover< T, A >::improve( A & action_to_improve )
      }
   }
 
-  cout << "Chose " << action_to_improve.str() << endl;
+  /*for ( auto & x: early_scores ) {
+    const A & early_replacement( x.first );
+    const auto early_outcome( x.second.get() );
+    const double early_score ( early_outcome.second.first );
+    cout << "Action: " << early_replacement.str() << " -> (early) " << early_score << endl; 
+  }*/
+
+  cout << "Chose " << action_to_improve.str() << " with score: " << score_to_beat_ << endl;
 
   return score_to_beat_;
 }
