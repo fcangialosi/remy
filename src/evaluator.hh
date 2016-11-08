@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <chrono>
 
 #include "random.hh"
 #include "whiskertree.hh"
@@ -22,10 +23,11 @@ public:
     double score;
     double early_score; // score at time 10 % of evaluation
     double max_queue_early; // maximum queue size sender has seen at 10 % of the evaluation
+    std::chrono::milliseconds time;
     std::vector< std::pair< NetConfig, std::vector< std::pair< double, double > > > > throughputs_delays;
     T used_actions;
 
-    Outcome() : score( 0 ), early_score( 0 ), max_queue_early( 0 ), throughputs_delays(), used_actions() {}
+    Outcome() : score( 0 ), early_score( 0 ), max_queue_early( 0 ), time( 0 ), throughputs_delays(), used_actions() {}
 
     Outcome( const AnswerBuffers::Outcome & dna );
 

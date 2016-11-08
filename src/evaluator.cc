@@ -82,10 +82,10 @@ Evaluator< WhiskerTree >::Outcome Evaluator<WhiskerTree>::evaluate_for_bailout( 
   PRNG run_prng( prng_seed );
   run_whiskers.reset_counts();
   BailoutLogging data;
+  auto start_time = chrono::high_resolution_clock::now();
   for ( auto &x : configs ) {
     Network<SenderGang<Rat, TimeSwitchedSender<Rat>>,
       SenderGang<Rat, TimeSwitchedSender<Rat>>> network1( Rat( run_whiskers, trace ), run_prng, x );
-
     data = network1.run_simulation_bailout_logging( ticks_to_run );
     the_outcome.early_score += data.early_score;
 
@@ -93,9 +93,9 @@ Evaluator< WhiskerTree >::Outcome Evaluator<WhiskerTree>::evaluate_for_bailout( 
 
     the_outcome.throughputs_delays.emplace_back( x, network1.senders().throughputs_delays() );
   }
-
+  auto end_time = chrono::high_resolution_clock::now();
   the_outcome.used_actions = run_whiskers;
-
+  the_outcome.time = std::chrono::duration_cast<chrono::milliseconds>(end_time - start_time);
   return the_outcome;
 }
 
@@ -236,7 +236,7 @@ AnswerBuffers::Outcome Evaluator< T >::Outcome::DNA( void ) const
 
 template <typename T>
 Evaluator< T >::Outcome::Outcome( const AnswerBuffers::Outcome & dna )
-  : score( dna.score() ), early_score( 0 ), max_queue_early( 0 ), throughputs_delays(), used_actions() {
+  : score( dna.score() ), early_score( 0 ), max_queue_early( 0 ), time( 0 ), throughputs_delays(), used_actions() {
   for ( const auto &x : dna.throughputs_delays() ) {
     vector< pair< double, double > > tp_del;
     for ( const auto &result : x.results() ) {

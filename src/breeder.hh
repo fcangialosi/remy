@@ -5,7 +5,7 @@
 #include <boost/functional/hash.hpp>
 #include <future>
 #include <vector>
-
+#include <chrono>
 #include "configrange.hh"
 #include "evaluator.hh"
 
@@ -13,6 +13,7 @@ struct OutcomeData
 {
   double score;
   double early_score;
+  float time;
 };
 struct BreederOptions
 {

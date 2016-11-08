@@ -3,7 +3,7 @@
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics.hpp>
 #include <boost/accumulators/statistics/tail_quantile.hpp>
-
+#include <chrono>
 #include "breeder.hh"
 #include "evaluator.hh"
 using namespace boost::accumulators;
@@ -68,6 +68,7 @@ void ActionImprover< T, A >:: evaluate_for_bailout(const vector<A> &replacements
                   auto outcome( e.evaluate_for_bailout( replaced_tree, false, carefulness ) );
                   data.score = outcome.score;
                   data.early_score = outcome.early_score;
+                  data.time = outcome.time.count();
                   return make_pair( true, data ); },
                   eval_, test_replacement, tree_, carefulness ) );
             } else {
@@ -163,7 +164,8 @@ double ActionImprover< T, A >::improve( A & action_to_improve )
      const OutcomeData data(outcome.second );
      const double score( data.score );
      const double early_score( data.early_score );
-     cout << "Action: " << replacement.str() << " -> 100%: " << score << " , 10%: " << early_score << endl;
+     const float time( data.time );
+     cout << "Action: " << replacement.str() << " -> 100%: " << score << " , 10%: " << early_score << " with TIME: " << time << endl;
      /* should we cache this result? */
      if ( was_new_evaluation ) {
        eval_cache_early.insert( make_pair( replacement, data ) );
