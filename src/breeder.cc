@@ -6,6 +6,8 @@
 
 #include "breeder.hh"
 
+#include <chrono>
+
 using namespace boost::accumulators;
 using namespace std;
 
@@ -49,7 +51,7 @@ ActionImprover< T, A >::ActionImprover( const Evaluator< T > & s_evaluator,
 
 template <typename T, typename A>
 void ActionImprover< T, A >::evaluate_replacements(const vector<A> &replacements,
-    vector< pair< const A &, future< pair< bool, double > > > > &scores,
+    vector< pair< const A &, future< tuple< bool, double, unsigned long long > > > > &scores,
     const double carefulness ) 
 {
   for ( const auto & test_replacement : replacements ) {
@@ -63,13 +65,14 @@ void ActionImprover< T, A >::evaluate_replacements(const vector<A> &replacements
                                     T replaced_tree( tree );
                                     const bool found_replacement __attribute((unused)) = replaced_tree.replace( r );
                                     assert( found_replacement );
-                                    return make_pair( true, e.score( replaced_tree, false, carefulness ).score ); },
+																		auto result = e.score( replaced_tree, false, carefulness );
+                                    return make_tuple( true, result.score, (unsigned long long)result.time_elapsed.count() ); },
                                   eval_, test_replacement, tree_, carefulness ) );
     } else {
       /* we already know the score */
       scores.emplace_back( test_replacement,
         async( launch::deferred, [] ( const double value ) {
-               return make_pair( false, value ); }, eval_cache_.at( test_replacement ) ) );
+               return make_tuple( false, value, ((unsigned long long)-1) ); }, eval_cache_.at( test_replacement ) ) );
     }
   } 
 }
@@ -94,7 +97,7 @@ void ActionImprover< T, A >::find_bad_replacements(const vector<A> &replacements
   } 
 }
 
-
+/*
 
 template <typename T, typename A>
 vector<A> ActionImprover< T, A >::early_bail_out( const vector< A > &replacements,
@@ -112,14 +115,11 @@ vector<A> ActionImprover< T, A >::early_bail_out( const vector< A > &replacement
     raw_scores.push_back( score );
   }
   
-  /* Set the lower bound to be MAX_PERCENT_ERROR worse than the current best score */
   double lower_bound = std::min( score_to_beat_ * (1 + MAX_PERCENT_ERROR), 
         score_to_beat_ * (1 - MAX_PERCENT_ERROR) );
-  /* Get the score at given quantile */
   double quantile_bound = quantile( acc, quantile_probability = 1 - quantile_to_keep );
   double cutoff = std::max( lower_bound, quantile_bound );
 
-  /* Discard replacements below threshold */
   vector<A> top_replacements;
   for ( uint i = 0; i < scores.size(); i ++ ) {
     const A & replacement( scores.at( i ).first );
@@ -130,6 +130,7 @@ vector<A> ActionImprover< T, A >::early_bail_out( const vector< A > &replacement
   }
   return top_replacements;
 }
+*/
 
 template <typename T, typename A>
 vector<A> ActionImprover< T, A >::early_bail_out_queue( const vector< A > &replacements,
@@ -162,23 +163,33 @@ vector<A> ActionImprover< T, A >::early_bail_out_queue( const vector< A > &repla
 template <typename T, typename A>
 double ActionImprover< T, A >::improve( A & action_to_improve )
 {
+	cout << "<<<improve>>>" << endl;
   auto replacements = get_replacements( action_to_improve );
-  vector< pair< const A &, future< pair< bool, double > > > > scores;
+  vector< pair< const A &, future< tuple< bool, double, unsigned long long > > > > scores;
 
   /* Run for 10% simulation time in isolation (1 sender always on) to see 
    * how sender fills up the router buffer and discard those that are too
    * passive or too aggressive early on */
-  vector<A> top_replacements = early_bail_out_queue( replacements, 0.1 );
-  cout << ">>> REMOVED " << (replacements.size() - top_replacements.size()) << endl;
+  vector<A> top_replacements = early_bail_out_queue( replacements, 1.0 );
+	unsigned int num_removed = (replacements.size() - top_replacements.size());
+	if (num_removed > 0) {
+		cout << ">>> REMOVED=" << num_removed << endl;
+	}
+
+	unsigned long long maxll = ((unsigned long long)-1);
 
   /* find best replacement */
   evaluate_replacements( top_replacements, scores, 1 );
   for ( auto & x : scores ) {
      const A & replacement( x.first );
      const auto outcome( x.second.get() );
-     const bool was_new_evaluation( outcome.first );
-     const double score( outcome.second );
+     const bool was_new_evaluation( std::get<0>(outcome) );
+     const double score( std::get<1>(outcome) );
+		 const unsigned long long time_elapsed( std::get<2>(outcome) );
 
+		 if (time_elapsed != (maxll)) {
+		   cout << "<<< " << time_elapsed << endl;
+		 } 
      /* should we cache this result? */
      if ( was_new_evaluation ) {
        eval_cache_.insert( make_pair( replacement, score ) );

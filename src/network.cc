@@ -3,6 +3,10 @@
 #include "sendergangofgangs.cc"
 #include "link-templates.cc"
 
+/* DEBUG */
+#include <iostream>
+/* /DEBUG */
+
 template <class Gang1Type, class Gang2Type>
 Network<Gang1Type, Gang2Type>::Network( const typename Gang1Type::Sender & example_sender1,
 					const typename Gang2Type::Sender & example_sender2,
@@ -86,6 +90,12 @@ unsigned int Network<Gang1Type, Gang2Type>::run_simulation_until_queue_limit( co
 			_link.next_event_time( _tickno ) ),
 		   min( _delay.next_event_time( _tickno ),
 			_rec.next_event_time( _tickno ) ) );
+
+		/* DEBUG */
+		if (_link.buffer_size() > 0) {
+			std::cout << ">>> QSIZE=" << _link.buffer_size() << std::endl;
+		}
+		/* /DEBUG */
 
     if ( _tickno > duration || _link.buffer_size() >= max_queue) break;
     assert( _tickno < std::numeric_limits<double>::max() );

@@ -30,16 +30,17 @@ protected:
   virtual std::vector< A > get_replacements( A & action_to_improve ) = 0;
 
   void evaluate_replacements(const std::vector< A > &replacements,
-    std::vector< std::pair< const A &, std::future< std::pair< bool, double > > > > &scores,
+    std::vector< std::pair< const A &, std::future< std::tuple< bool, double, unsigned long long > > > > &scores,
     const double carefulness);
 
   void find_bad_replacements(const std::vector< A > &replacements,
     std::vector< std::pair< const A &, std::future< std::pair< bool, bool > > > > &scores,
     const double carefulness);
 
+	/*
   std::vector< A > early_bail_out(const std::vector< A > &replacements,
         const double carefulness, const double quantile_to_keep);
-
+*/
   std::vector< A > early_bail_out_queue(const std::vector< A > &replacements,
         const double carefulness);
 

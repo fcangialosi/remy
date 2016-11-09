@@ -6,6 +6,8 @@
 #include "rat-templates.cc"
 #include "fish-templates.cc"
 
+#include <iostream>
+
 template <typename T>
 Evaluator< T >::Evaluator( const ConfigRange & range )
   : _prng_seed( global_PRNG()() ), /* freeze the PRNG seed for the life of this Evaluator */
@@ -84,6 +86,7 @@ Evaluator< WhiskerTree >::Outcome Evaluator< WhiskerTree >::score( WhiskerTree &
 
   /* run tests */
   Evaluator::Outcome the_outcome;
+	auto start_time = chrono::high_resolution_clock::now();
   for ( auto &x : configs ) {
     /* run once */
     Network<SenderGang<Rat, TimeSwitchedSender<Rat>>,
@@ -93,8 +96,12 @@ Evaluator< WhiskerTree >::Outcome Evaluator< WhiskerTree >::score( WhiskerTree &
     the_outcome.score += network1.senders().utility();
     the_outcome.throughputs_delays.emplace_back( x, network1.senders().throughputs_delays() );
   }
+	auto end_time = chrono::high_resolution_clock::now();
 
   the_outcome.used_actions = run_whiskers;
+	/* DEBUG */
+	the_outcome.time_elapsed = std::chrono::duration_cast<chrono::microseconds>(end_time - start_time);
+	/* /DEBUG */
 
   return the_outcome;
 }
@@ -229,7 +236,7 @@ AnswerBuffers::Outcome Evaluator< T >::Outcome::DNA( void ) const
 
 template <typename T>
 Evaluator< T >::Outcome::Outcome( const AnswerBuffers::Outcome & dna )
-  : score( dna.score() ), throughputs_delays(), used_actions() {
+  : score( dna.score() ), time_elapsed( 0 ), throughputs_delays(), used_actions() {
   for ( const auto &x : dna.throughputs_delays() ) {
     vector< pair< double, double > > tp_del;
     for ( const auto &result : x.results() ) {

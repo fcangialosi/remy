@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <chrono>
 
 #include "random.hh"
 #include "whiskertree.hh"
@@ -19,10 +20,11 @@ public:
   {
   public:
     double score;
+		std::chrono::microseconds time_elapsed;
     std::vector< std::pair< NetConfig, std::vector< std::pair< double, double > > > > throughputs_delays;
     T used_actions;
 
-    Outcome() : score( 0 ), throughputs_delays(), used_actions() {}
+    Outcome() : score( 0 ), time_elapsed( 0 ), throughputs_delays(), used_actions() {}
 
     Outcome( const AnswerBuffers::Outcome & dna );
 
