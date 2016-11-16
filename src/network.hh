@@ -12,10 +12,13 @@
 #include "answer.pb.h"
 
 struct BailoutLogging {
-    double score;
-    double early_score;
-    double early_max_queue_size;
-    double max_queue_size;
+  double score_10;
+  double score_50;
+  double score;
+
+  double queue_10;
+  double queue_50;
+  double queue;
 };
 
 class SimulationRunData; // from simulationresults.hh
@@ -99,6 +102,7 @@ public:
 
   Network( const typename Gang1Type::Sender & example_sender1, PRNG & s_prng, const NetConfig & config );
 
+  Network( const typename Gang1Type::Sender & example_sender1, PRNG & s_prng, const NetConfig & config, double num_senders );
   void run_simulation( const double & duration );
 
   void run_simulation_with_logging_until( const double tick_limit, SimulationRunData &, const double interval );

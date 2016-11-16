@@ -82,13 +82,35 @@ Evaluator< WhiskerTree >::Outcome Evaluator<WhiskerTree>::evaluate_for_bailout( 
   PRNG run_prng( prng_seed );
   run_whiskers.reset_counts();
   BailoutLogging data;
+  BailoutLogging always_on_data;
   auto start_time = chrono::high_resolution_clock::now();
   for ( auto &x : configs ) {
+    // run an always on sender, log statistics
+    Network<SenderGang<Rat, AlwaysOnSender<Rat>>,
+      SenderGang<Rat, AlwaysOnSender<Rat>>> always_on_network( Rat( run_whiskers, trace ), run_prng, x, 1 );
+    always_on_data = always_on_network.run_simulation_bailout_logging( ticks_to_run );
+    the_outcome.statistics.always_on_10_score += always_on_data.score_10;
+    the_outcome.statistics.always_on_50_score += always_on_data.score_50;
+    the_outcome.statistics.always_on_100_score += always_on_data.score;
+
+    // queue statistics
+    the_outcome.statistics.always_on_10_queue += always_on_data.queue_10;
+    the_outcome.statistics.always_on_50_queue += always_on_data.queue_50;
+    the_outcome.statistics.always_on_100_queue += always_on_data.queue;
+
+
+    // run a regilar sender, evaluate statistics
     Network<SenderGang<Rat, TimeSwitchedSender<Rat>>,
       SenderGang<Rat, TimeSwitchedSender<Rat>>> network1( Rat( run_whiskers, trace ), run_prng, x );
     data = network1.run_simulation_bailout_logging( ticks_to_run );
-    the_outcome.early_score += data.early_score;
+    the_outcome.statistics.regular_10_score += data.score_10;
+    the_outcome.statistics.regular_50_score += data.score_50;
+    the_outcome.statistics.regular_100_score += data.score;
 
+    // queue statistics for regular sender
+    the_outcome.statistics.regular_10_queue += data.queue_10;
+    the_outcome.statistics.regular_50_queue += data.queue_50;
+    the_outcome.statistics.regular_100_queue += data.queue;
     the_outcome.score += data.score;
 
     the_outcome.throughputs_delays.emplace_back( x, network1.senders().throughputs_delays() );
@@ -117,7 +139,7 @@ Evaluator< FinTree >::Outcome Evaluator< FinTree > ::evaluate_for_bailout( FinTr
     SenderGang<Fish, TimeSwitchedSender<Fish>>> network1( Fish( run_fins, fish_prng_seed, trace ), run_prng, x );
 
   network1.run_simulation( ticks_to_run );
-  the_outcome.early_score += data.early_score;
+  the_outcome.statistics.regular_10_score += data.score_10;
   the_outcome.score += data.score;
 
   the_outcome.throughputs_delays.emplace_back( x, network1.senders().throughputs_delays() );
@@ -236,7 +258,7 @@ AnswerBuffers::Outcome Evaluator< T >::Outcome::DNA( void ) const
 
 template <typename T>
 Evaluator< T >::Outcome::Outcome( const AnswerBuffers::Outcome & dna )
-  : score( dna.score() ), early_score( 0 ), max_queue_early( 0 ), time( 0 ), throughputs_delays(), used_actions() {
+  : score( dna.score() ), time( 0 ), throughputs_delays(), used_actions(), statistics() {
   for ( const auto &x : dna.throughputs_delays() ) {
     vector< pair< double, double > > tp_del;
     for ( const auto &result : x.results() ) {

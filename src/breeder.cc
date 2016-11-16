@@ -66,8 +66,25 @@ void ActionImprover< T, A >:: evaluate_for_bailout(const vector<A> &replacements
                   T replaced_tree( tree );
                   const bool found_replacement __attribute((unused)) = replaced_tree.replace( r );
                   auto outcome( e.evaluate_for_bailout( replaced_tree, false, carefulness ) );
+                  // score statistics
                   data.score = outcome.score;
-                  data.early_score = outcome.early_score;
+                  data.score_10 = outcome.statistics.regular_10_score;
+                  data.score_50 = outcome.statistics.regular_50_score;
+
+                  // score statistics for always on sender
+                  data.always_on_score_10 = outcome.statistics.always_on_10_score;
+                  data.always_on_score_50 = outcome.statistics.always_on_10_score;
+                  data.always_on_score = outcome.statistics.always_on_100_score;
+
+                  // queue statistics for always on sender
+                  data.always_on_queue = outcome.statistics.always_on_100_queue;
+                  data.always_on_queue_10 = outcome.statistics.always_on_10_queue;
+                  data.always_on_queue_50 = outcome.statistics.always_on_50_queue;
+
+                  // queue statistics for regular senders
+                  data.queue = outcome.statistics.regular_100_queue;
+                  data.queue_10 = outcome.statistics.regular_10_queue;
+                  data.queue_50 = outcome.statistics.regular_50_queue;
                   data.time = outcome.time.count();
                   return make_pair( true, data ); },
                   eval_, test_replacement, tree_, carefulness ) );
@@ -163,9 +180,27 @@ double ActionImprover< T, A >::improve( A & action_to_improve )
      const bool was_new_evaluation( outcome.first );
      const OutcomeData data(outcome.second );
      const double score( data.score );
-     const double early_score( data.early_score );
+     const double score_10( data.score_10 );
+     const double score_50( data.score_50 );
+
+     const double always_on_score( data.always_on_score );
+     const double always_on_score_10( data.always_on_score_10 );
+     const double always_on_score_50( data.always_on_score_50 );
+
+     const double queue( data.queue );
+     const double queue_10( data.queue_10 );
+     const double queue_50( data.queue_50 );
+
+     const double always_on_queue( data.always_on_queue );
+     const double always_on_queue_10( data.always_on_queue_10 );
+     const double always_on_queue_50( data.always_on_queue_50 );
      const float time( data.time );
-     cout << "Action: " << replacement.str() << " -> 100%: " << score << " , 10%: " << early_score << " with TIME: " << time << endl;
+     cout << "Action: " << replacement.str() << " with TIME: " << time << endl;
+     cout << "Regular sender scores-> 100%: " << score << " , 10%: " << score_10 << " , 50%: " << score_50 << endl;
+     cout << "Always on sender scores-> 100%: " << always_on_score << " , 10%: " << always_on_score_10 << " , 50%: " << always_on_score_50 << endl;
+     cout << "Regular sender queue sizes-> 100% " << queue << ", 10%: " << queue_10 << ", 50%: " << queue_50 << endl;
+     cout << "Always on sender queue sizes-> 100% " << always_on_queue << ", 10%: " << always_on_queue_10 << ", 50%: " << always_on_queue_50 << endl;
+
      /* should we cache this result? */
      if ( was_new_evaluation ) {
        eval_cache_early.insert( make_pair( replacement, data ) );
@@ -176,13 +211,6 @@ double ActionImprover< T, A >::improve( A & action_to_improve )
       action_to_improve = replacement;
      }
   }
-
-  /*for ( auto & x: early_scores ) {
-    const A & early_replacement( x.first );
-    const auto early_outcome( x.second.get() );
-    const double early_score ( early_outcome.second.first );
-    cout << "Action: " << early_replacement.str() << " -> (early) " << early_score << endl; 
-  }*/
 
   cout << "Chose " << action_to_improve.str() << " with score: " << score_to_beat_ << endl;
 

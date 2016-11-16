@@ -12,8 +12,22 @@
 struct OutcomeData
 {
   double score;
-  double early_score;
+  double score_10;
+  double score_50;
+
+  double always_on_score_10;
+  double always_on_score_50;
+  double always_on_score;
+
+  double queue;
+  double queue_10;
+  double queue_50;
+
+  double always_on_queue_10;
+  double always_on_queue_50;
+  double always_on_queue;
   float time;
+
 };
 struct BreederOptions
 {

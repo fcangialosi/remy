@@ -35,6 +35,22 @@ Network<Gang1Type, Gang2Type>::Network( const typename Gang1Type::Sender & examp
 }
 
 template <class Gang1Type, class Gang2Type>
+Network<Gang1Type, Gang2Type>::Network( const typename Gang1Type::Sender & example_sender1,
+           PRNG & s_prng,
+           const NetConfig & config,
+           double num_senders)
+  : _prng( s_prng ),
+    _senders( Gang1Type( config.mean_on_duration, config.mean_off_duration, num_senders, example_sender1, _prng ),
+      Gang2Type() ),
+    _link( config.link_ppt, config.buffer_size ),
+    _delay( config.delay ),
+    _rec(),
+    _tickno( 0 ),
+    _stochastic_loss( config.stochastic_loss_rate , _prng)
+{
+}
+
+template <class Gang1Type, class Gang2Type>
 void Network<Gang1Type, Gang2Type>::tick( void )
 {
   _senders.tick( _link, _rec, _tickno );
@@ -55,6 +71,7 @@ BailoutLogging Network<Gang1Type, Gang2Type>::run_simulation_bailout_logging( co
   // at 10 % of the evaluation time, stop and record the max queue size seen so far and the max size the queue has seen
   assert ( _tickno == 0 );
   bool early_written = false;
+  bool mid_written = false;
   while ( _tickno < duration ) {
     /* find element with the soonest event */
     _tickno = min( min( _senders.next_event_time( _tickno ),
@@ -64,7 +81,14 @@ BailoutLogging Network<Gang1Type, Gang2Type>::run_simulation_bailout_logging( co
 
      if ( (_tickno > .10 * duration) && !early_written ) {
        early_written = true;
-       bailout.early_score = _senders.utility();
+       bailout.score_10 = _senders.utility();
+       bailout.queue_10 = _link.get_largest_queue();
+     }
+
+     if ( (_tickno > .5 * duration) && !mid_written ) {
+        mid_written = true;
+        bailout.score_50 = _senders.utility();
+        bailout.queue_50 = _link.get_largest_queue();
      }
 
     if ( _tickno > duration ) break;
@@ -74,6 +98,7 @@ BailoutLogging Network<Gang1Type, Gang2Type>::run_simulation_bailout_logging( co
   }
 
   bailout.score = _senders.utility();
+  bailout.queue = _link.get_largest_queue();
 
   return bailout;
 }
