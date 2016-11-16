@@ -82,13 +82,13 @@ BailoutLogging Network<Gang1Type, Gang2Type>::run_simulation_bailout_logging( co
      if ( (_tickno > .10 * duration) && !early_written ) {
        early_written = true;
        bailout.score_10 = _senders.utility();
-       bailout.queue_10 = _link.get_largest_queue();
+       bailout.queue_10 = (double)(_link.get_largest_queue());
      }
 
      if ( (_tickno > .5 * duration) && !mid_written ) {
         mid_written = true;
         bailout.score_50 = _senders.utility();
-        bailout.queue_50 = _link.get_largest_queue();
+        bailout.queue_50 = (double)(_link.get_largest_queue());
      }
 
     if ( _tickno > duration ) break;
@@ -98,7 +98,7 @@ BailoutLogging Network<Gang1Type, Gang2Type>::run_simulation_bailout_logging( co
   }
 
   bailout.score = _senders.utility();
-  bailout.queue = _link.get_largest_queue();
+  bailout.queue =(double)(_link.get_largest_queue());
 
   return bailout;
 }

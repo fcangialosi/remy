@@ -94,9 +94,9 @@ Evaluator< WhiskerTree >::Outcome Evaluator<WhiskerTree>::evaluate_for_bailout( 
     the_outcome.statistics.always_on_100_score += always_on_data.score;
 
     // queue statistics
-    the_outcome.statistics.always_on_10_queue += always_on_data.queue_10;
-    the_outcome.statistics.always_on_50_queue += always_on_data.queue_50;
-    the_outcome.statistics.always_on_100_queue += always_on_data.queue;
+    the_outcome.statistics.always_on_10_queue += (double)always_on_data.queue_10;
+    the_outcome.statistics.always_on_50_queue += (double)always_on_data.queue_50;
+    the_outcome.statistics.always_on_100_queue += (double)always_on_data.queue;
 
 
     // run a regilar sender, evaluate statistics
@@ -108,9 +108,9 @@ Evaluator< WhiskerTree >::Outcome Evaluator<WhiskerTree>::evaluate_for_bailout( 
     the_outcome.statistics.regular_100_score += data.score;
 
     // queue statistics for regular sender
-    the_outcome.statistics.regular_10_queue += data.queue_10;
-    the_outcome.statistics.regular_50_queue += data.queue_50;
-    the_outcome.statistics.regular_100_queue += data.queue;
+    the_outcome.statistics.regular_10_queue += (double)data.queue_10;
+    the_outcome.statistics.regular_50_queue += (double)data.queue_50;
+    the_outcome.statistics.regular_100_queue += (double)data.queue;
     the_outcome.score += data.score;
 
     the_outcome.throughputs_delays.emplace_back( x, network1.senders().throughputs_delays() );

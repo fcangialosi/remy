@@ -28,6 +28,7 @@ public:
       if ( _limit and _buffer.size() < _limit ) {
         _buffer.push_back( p );
         if ( _buffer.size() > _largest_queue ) {
+          //printf("THE BUFFER SIZE IS INCREASING FROM %lu to %u\n", _buffer.size(), _largest_queue);
           _largest_queue = _buffer.size();
         }
       }
@@ -62,7 +63,11 @@ public:
     }
   }
 
-  unsigned int get_largest_queue( void ) const { return _largest_queue; }
+  unsigned int get_largest_queue( void ) const
+  {
+    //printf("The largest queue is %u\n", _largest_queue);
+    return _largest_queue;
+  }
 };
 
 #endif
