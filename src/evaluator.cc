@@ -88,7 +88,7 @@ Evaluator< WhiskerTree >::Outcome Evaluator<WhiskerTree>::evaluate_for_bailout( 
     // run an always on sender, log statistics
     Network<SenderGang<Rat, AlwaysOnSender<Rat>>,
       SenderGang<Rat, AlwaysOnSender<Rat>>> always_on_network( Rat( run_whiskers, trace ), run_prng, x, 1 );
-    always_on_data = always_on_network.run_simulation_bailout_logging( ticks_to_run );
+    always_on_data = always_on_network.run_simulation_bailout_logging( ticks_to_run, true );
     the_outcome.statistics.always_on_10_score += always_on_data.score_10;
     the_outcome.statistics.always_on_50_score += always_on_data.score_50;
     the_outcome.statistics.always_on_100_score += always_on_data.score;
@@ -101,8 +101,8 @@ Evaluator< WhiskerTree >::Outcome Evaluator<WhiskerTree>::evaluate_for_bailout( 
 
     // run a regilar sender, evaluate statistics
     Network<SenderGang<Rat, TimeSwitchedSender<Rat>>,
-      SenderGang<Rat, TimeSwitchedSender<Rat>>> network1( Rat( run_whiskers, trace ), run_prng, x );
-    data = network1.run_simulation_bailout_logging( ticks_to_run );
+      SenderGang<Rat, TimeSwitchedSender<Rat>>> network1( Rat( run_whiskers, trace ), run_prng, x, 1 );
+    data = network1.run_simulation_bailout_logging( ticks_to_run, false );
     the_outcome.statistics.regular_10_score += data.score_10;
     the_outcome.statistics.regular_50_score += data.score_50;
     the_outcome.statistics.regular_100_score += data.score;
@@ -112,8 +112,10 @@ Evaluator< WhiskerTree >::Outcome Evaluator<WhiskerTree>::evaluate_for_bailout( 
     the_outcome.statistics.regular_50_queue += (double)data.queue_50;
     the_outcome.statistics.regular_100_queue += (double)data.queue;
     the_outcome.score += data.score;
+    //the_outcome.score += always_on_data.score;
 
     the_outcome.throughputs_delays.emplace_back( x, network1.senders().throughputs_delays() );
+    //the_outcome.throughputs_delays.emplace_back( x, always_on_network.senders().throughputs_delays() );
   }
   auto end_time = chrono::high_resolution_clock::now();
   the_outcome.used_actions = run_whiskers;

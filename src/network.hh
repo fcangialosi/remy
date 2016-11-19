@@ -109,7 +109,7 @@ public:
 
   void run_simulation_until( const double tick_limit );
 
-  BailoutLogging run_simulation_bailout_logging( const double & duration );
+  BailoutLogging run_simulation_bailout_logging( const double & duration, bool logging );
   const SenderGangofGangs<Gang1Type, Gang2Type> & senders( void ) const { return _senders; }
 
   SenderGangofGangs<Gang1Type, Gang2Type> & mutable_senders( void ) { return _senders; }

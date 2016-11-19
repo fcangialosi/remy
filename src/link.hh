@@ -16,19 +16,23 @@ private:
 
   unsigned int _limit;
   unsigned int _largest_queue;
+  bool _debug;
 public:
   Link( const double s_rate,
 	const unsigned int s_limit )
-    : _buffer(), _pending_packet( 1.0 / s_rate ), _limit( s_limit ), _largest_queue( 0 ) {}
+    : _buffer(), _pending_packet( 1.0 / s_rate ), _limit( s_limit ), _largest_queue( 0 ), _debug(false) {}
 
   void accept( const Packet & p, const double & tickno ) noexcept {
     if ( _pending_packet.empty() ) {
       _pending_packet.accept( p, tickno );
+      if ( _debug )
+        printf("In the accept function for delay for tickno accepting pending packet %f\n", tickno);
     } else {
       if ( _limit and _buffer.size() < _limit ) {
         _buffer.push_back( p );
-        if ( _buffer.size() > _largest_queue ) {
-          //printf("THE BUFFER SIZE IS INCREASING FROM %lu to %u\n", _buffer.size(), _largest_queue);
+        if ( (unsigned int)_buffer.size() > _largest_queue ) {
+          if ( _debug )
+            printf("THE BUFFER SIZE IS INCREASING FROM %u to %lu\n", _largest_queue, _buffer.size());
           _largest_queue = _buffer.size();
         }
       }
@@ -68,6 +72,11 @@ public:
     //printf("The largest queue is %u\n", _largest_queue);
     return _largest_queue;
   }
+  unsigned int get_queue_size( void ) const
+  {
+    return (unsigned int)(_buffer.size());
+  }
+  void set_debug( const bool debug ) { _debug = debug; };
 };
 
 #endif

@@ -138,7 +138,7 @@ public:
                      s_sender,
                      true )
     {
-      SwitchedSender<SenderType>::next_switch_tick = std::numeric_limits<double>::max();
+      //SwitchedSender<SenderType>::next_switch_tick = std::numeric_limits<double>::max();
     }
 
   template <class NextHop>
@@ -153,7 +153,10 @@ public:
 		 Exponential &,
 		 Exponential &,
 		 const unsigned int ) override
-  {}
+  {
+    SwitchedSender<SenderType>::next_switch_tick = std::numeric_limits<double>::max();
+  }
+
 
   using SwitchedSender<SenderType>::SwitchedSender;    
 };

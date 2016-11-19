@@ -60,13 +60,14 @@ void Network<Gang1Type, Gang2Type>::tick( void )
 }
 
 template <class Gang1Type, class Gang2Type>
-BailoutLogging Network<Gang1Type, Gang2Type>::run_simulation_bailout_logging( const double & duration )
+BailoutLogging Network<Gang1Type, Gang2Type>::run_simulation_bailout_logging( const double & duration, bool logging )
 {
   // idea : run the simulation, but record what happens at 10 % of the time
   // send this back to the simulation to print some statistics
 
   BailoutLogging bailout;
-
+  if ( logging )
+    _link.set_debug(true);
   // TODO: run the regular sender for all the time
   // at 10 % of the evaluation time, stop and record the max queue size seen so far and the max size the queue has seen
   assert ( _tickno == 0 );
@@ -78,6 +79,10 @@ BailoutLogging Network<Gang1Type, Gang2Type>::run_simulation_bailout_logging( co
        min(_link.next_event_time( _tickno ), _stochastic_loss.next_event_time( _tickno)) ),
         min( _delay.next_event_time( _tickno ),
           _rec.next_event_time( _tickno ) ) );
+     if ( logging ) {
+       //printf("The tick number is %f\n", _tickno );
+       //printf("The size of the queue is %u\n", _link.get_queue_size() );
+     }
 
      if ( (_tickno > .10 * duration) && !early_written ) {
        early_written = true;
@@ -95,6 +100,8 @@ BailoutLogging Network<Gang1Type, Gang2Type>::run_simulation_bailout_logging( co
     assert( _tickno < std::numeric_limits<double>::max() );
 
     tick();
+    if ( logging )
+      printf("The size of the queue is %f\n", (double)(_link.get_largest_queue()));
   }
 
   bailout.score = _senders.utility();
