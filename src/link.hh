@@ -25,14 +25,10 @@ public:
   void accept( const Packet & p, const double & tickno ) noexcept {
     if ( _pending_packet.empty() ) {
       _pending_packet.accept( p, tickno );
-      if ( _debug )
-        printf("In the accept function for delay for tickno accepting pending packet %f\n", tickno);
     } else {
       if ( _limit and _buffer.size() < _limit ) {
         _buffer.push_back( p );
         if ( (unsigned int)_buffer.size() > _largest_queue ) {
-          if ( _debug )
-            printf("THE BUFFER SIZE IS INCREASING FROM %u to %lu\n", _largest_queue, _buffer.size());
           _largest_queue = _buffer.size();
         }
       }
@@ -69,7 +65,6 @@ public:
 
   unsigned int get_largest_queue( void ) const
   {
-    //printf("The largest queue is %u\n", _largest_queue);
     return _largest_queue;
   }
   unsigned int get_queue_size( void ) const

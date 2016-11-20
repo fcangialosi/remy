@@ -67,7 +67,7 @@ public:
 		const double carefulness = 1) const;
   Outcome evaluate_for_bailout( T & run_actions,
     const bool trace = false,
-    const double carefulness = 1) const;
+    const double carefulness = 1, const bool always_on = false) const;
   static Evaluator::Outcome parse_problem_and_evaluate( const ProblemBuffers::Problem & problem );
   static Outcome score( T & run_actions,
 			const unsigned int prng_seed,
@@ -78,7 +78,7 @@ public:
       const unsigned int prng_seed,
       const std::vector<NetConfig> & configs,
       const bool trace,
-      const unsigned int ticks_to_run );
+      const unsigned int ticks_to_run, const bool always_on );
 };
 
 #endif

@@ -79,10 +79,6 @@ BailoutLogging Network<Gang1Type, Gang2Type>::run_simulation_bailout_logging( co
        min(_link.next_event_time( _tickno ), _stochastic_loss.next_event_time( _tickno)) ),
         min( _delay.next_event_time( _tickno ),
           _rec.next_event_time( _tickno ) ) );
-     if ( logging ) {
-       //printf("The tick number is %f\n", _tickno );
-       //printf("The size of the queue is %u\n", _link.get_queue_size() );
-     }
 
      if ( (_tickno > .10 * duration) && !early_written ) {
        early_written = true;
@@ -100,8 +96,6 @@ BailoutLogging Network<Gang1Type, Gang2Type>::run_simulation_bailout_logging( co
     assert( _tickno < std::numeric_limits<double>::max() );
 
     tick();
-    if ( logging )
-      printf("The size of the queue is %f\n", (double)(_link.get_largest_queue()));
   }
 
   bailout.score = _senders.utility();

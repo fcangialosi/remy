@@ -64,22 +64,24 @@ void ActionImprover< T, A >:: evaluate_for_bailout(const vector<A> &replacements
                                       const double carefulness ) {
                   OutcomeData data;
                   T replaced_tree( tree );
+                  T replaced_tree_copy( tree );
                   const bool found_replacement __attribute((unused)) = replaced_tree.replace( r );
-                  auto outcome( e.evaluate_for_bailout( replaced_tree, false, carefulness ) );
+                  auto outcome( e.evaluate_for_bailout( replaced_tree, false, carefulness, false ) );
+                  auto always_on_outcome( e.evaluate_for_bailout( replaced_tree, false, carefulness, true ) );
                   // score statistics
                   data.score = outcome.score;
                   data.score_10 = outcome.statistics.regular_10_score;
                   data.score_50 = outcome.statistics.regular_50_score;
 
                   // score statistics for always on sender
-                  data.always_on_score_10 = outcome.statistics.always_on_10_score;
-                  data.always_on_score_50 = outcome.statistics.always_on_10_score;
-                  data.always_on_score = outcome.statistics.always_on_100_score;
+                  data.always_on_score_10 = always_on_outcome.statistics.always_on_10_score;
+                  data.always_on_score_50 = always_on_outcome.statistics.always_on_10_score;
+                  data.always_on_score = always_on_outcome.statistics.always_on_100_score;
 
                   // queue statistics for always on sender
-                  data.always_on_queue = outcome.statistics.always_on_100_queue;
-                  data.always_on_queue_10 = outcome.statistics.always_on_10_queue;
-                  data.always_on_queue_50 = outcome.statistics.always_on_50_queue;
+                  data.always_on_queue = always_on_outcome.statistics.always_on_100_queue;
+                  data.always_on_queue_10 = always_on_outcome.statistics.always_on_10_queue;
+                  data.always_on_queue_50 = always_on_outcome.statistics.always_on_50_queue;
 
                   // queue statistics for regular senders
                   data.queue = outcome.statistics.regular_100_queue;

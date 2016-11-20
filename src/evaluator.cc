@@ -75,47 +75,45 @@ ProblemBuffers::Problem Evaluator< FinTree >::DNA( const FinTree & fins ) const
 }
 
 template<>
-Evaluator< WhiskerTree >::Outcome Evaluator<WhiskerTree>::evaluate_for_bailout( WhiskerTree & run_whiskers, const unsigned int prng_seed, const vector<NetConfig> & configs, const bool trace, const unsigned int ticks_to_run )
+Evaluator< WhiskerTree >::Outcome Evaluator<WhiskerTree>::evaluate_for_bailout( WhiskerTree & run_whiskers, const unsigned int prng_seed, const vector<NetConfig> & configs, const bool trace, const unsigned int ticks_to_run, const bool always_on )
 {
   Evaluator::Outcome the_outcome;
-
   PRNG run_prng( prng_seed );
   run_whiskers.reset_counts();
   BailoutLogging data;
   BailoutLogging always_on_data;
   auto start_time = chrono::high_resolution_clock::now();
   for ( auto &x : configs ) {
+    if ( always_on ) {
     // run an always on sender, log statistics
-    Network<SenderGang<Rat, AlwaysOnSender<Rat>>,
-      SenderGang<Rat, AlwaysOnSender<Rat>>> always_on_network( Rat( run_whiskers, trace ), run_prng, x, 1 );
-    always_on_data = always_on_network.run_simulation_bailout_logging( ticks_to_run, true );
-    the_outcome.statistics.always_on_10_score += always_on_data.score_10;
-    the_outcome.statistics.always_on_50_score += always_on_data.score_50;
-    the_outcome.statistics.always_on_100_score += always_on_data.score;
+      Network<SenderGang<Rat, AlwaysOnSender<Rat>>,
+        SenderGang<Rat, AlwaysOnSender<Rat>>> always_on_network( Rat( run_whiskers, trace ), run_prng, x, 2 );
+      always_on_data = always_on_network.run_simulation_bailout_logging( ticks_to_run, true );
+      the_outcome.statistics.always_on_10_score += always_on_data.score_10;
+      the_outcome.statistics.always_on_50_score += always_on_data.score_50;
+      the_outcome.statistics.always_on_100_score += always_on_data.score;
 
-    // queue statistics
-    the_outcome.statistics.always_on_10_queue += (double)always_on_data.queue_10;
-    the_outcome.statistics.always_on_50_queue += (double)always_on_data.queue_50;
-    the_outcome.statistics.always_on_100_queue += (double)always_on_data.queue;
-
-
+      // queue statistics
+      the_outcome.statistics.always_on_10_queue =  std::max(the_outcome.statistics.always_on_10_queue, (double)always_on_data.queue_10);
+      the_outcome.statistics.always_on_50_queue = std::max(the_outcome.statistics.always_on_50_queue, (double)always_on_data.queue_50);
+      the_outcome.statistics.always_on_100_queue = std::max(the_outcome.statistics.always_on_100_queue, (double)always_on_data.queue );
+    } else {
     // run a regilar sender, evaluate statistics
-    Network<SenderGang<Rat, TimeSwitchedSender<Rat>>,
-      SenderGang<Rat, TimeSwitchedSender<Rat>>> network1( Rat( run_whiskers, trace ), run_prng, x, 1 );
-    data = network1.run_simulation_bailout_logging( ticks_to_run, false );
-    the_outcome.statistics.regular_10_score += data.score_10;
-    the_outcome.statistics.regular_50_score += data.score_50;
-    the_outcome.statistics.regular_100_score += data.score;
+      Network<SenderGang<Rat, TimeSwitchedSender<Rat>>,
+        SenderGang<Rat, TimeSwitchedSender<Rat>>> network1( Rat( run_whiskers, trace ), run_prng, x);
+      data = network1.run_simulation_bailout_logging( ticks_to_run, false );
+      the_outcome.statistics.regular_10_score += data.score_10;
+      the_outcome.statistics.regular_50_score += data.score_50;
+      the_outcome.statistics.regular_100_score += data.score;
 
-    // queue statistics for regular sender
-    the_outcome.statistics.regular_10_queue += (double)data.queue_10;
-    the_outcome.statistics.regular_50_queue += (double)data.queue_50;
-    the_outcome.statistics.regular_100_queue += (double)data.queue;
-    the_outcome.score += data.score;
-    //the_outcome.score += always_on_data.score;
+      // queue statistics for regular sender
+      the_outcome.statistics.regular_10_queue = std::max(the_outcome.statistics.regular_10_queue, (double)data.queue_10);
+      the_outcome.statistics.regular_50_queue = std::max(the_outcome.statistics.regular_50_queue, (double)data.queue_50);
+      the_outcome.statistics.regular_100_queue = std::max(the_outcome.statistics.regular_100_queue, (double)data.queue);
+      the_outcome.score += data.score;
 
-    the_outcome.throughputs_delays.emplace_back( x, network1.senders().throughputs_delays() );
-    //the_outcome.throughputs_delays.emplace_back( x, always_on_network.senders().throughputs_delays() );
+      the_outcome.throughputs_delays.emplace_back( x, network1.senders().throughputs_delays() );
+    }
   }
   auto end_time = chrono::high_resolution_clock::now();
   the_outcome.used_actions = run_whiskers;
@@ -128,8 +126,11 @@ Evaluator< FinTree >::Outcome Evaluator< FinTree > ::evaluate_for_bailout( FinTr
     const unsigned int prng_seed,
     const vector<NetConfig> & configs,
     const bool trace,
-    const unsigned int ticks_to_run )
+    const unsigned int ticks_to_run,
+    const bool always_on )
 {
+  if ( always_on )
+    printf("RUNNING FOR ALWAYS ON\n");
   PRNG run_prng( prng_seed );
   unsigned int fish_prng_seed( run_prng() );
   run_fins.reset_counts();
@@ -273,9 +274,9 @@ Evaluator< T >::Outcome::Outcome( const AnswerBuffers::Outcome & dna )
 
 template <typename T>
 typename Evaluator< T >::Outcome Evaluator< T >::evaluate_for_bailout( T & run_actions,
-    const bool trace, const double carefulness ) const
+    const bool trace, const double carefulness, const bool always_on ) const
 {
-  return evaluate_for_bailout( run_actions, _prng_seed, _configs, trace, _tick_count * carefulness );
+  return evaluate_for_bailout( run_actions, _prng_seed, _configs, trace, _tick_count * carefulness, always_on );
 }
 template <typename T>
 typename Evaluator< T >::Outcome Evaluator< T >::score( T & run_actions,
