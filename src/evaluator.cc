@@ -13,7 +13,10 @@ Evaluator< T >::Evaluator( const ConfigRange & range )
     _configs()
 {
   // add configs from every point in the cube of configs
-  for (double link_ppt = range.link_ppt.low; link_ppt <= range.link_ppt.high; link_ppt += range.link_ppt.incr) {
+  const double steps = 100.0;
+  const double link_speed_dynamic_range = range.link_ppt.high / range.link_ppt.low; 
+  const double multiplier = pow(link_speed_dynamic_range, 1.0 / steps);
+  for (double link_ppt = range.link_ppt.low; link_ppt <= (range.link_ppt.high * (1 + (multiplier-1)/2)); link_ppt *= multiplier) {
     for (double rtt = range.rtt.high; rtt <= range.rtt.high; rtt += range.rtt.incr) {
       for (unsigned int senders = range.num_senders.low; senders <= range.num_senders.high; senders += range.num_senders.incr) {
         for (double on = range.mean_on_duration.low; on <= range.mean_on_duration.high; on += range.mean_on_duration.incr) {
@@ -84,11 +87,12 @@ Evaluator< WhiskerTree >::Outcome Evaluator<WhiskerTree>::evaluate_for_bailout( 
   BailoutLogging always_on_data;
   auto start_time = chrono::high_resolution_clock::now();
   for ( auto &x : configs ) {
+    const double dynamic_tick_count = ticks_to_run / x.link_ppt;
     if ( always_on ) {
     // run an always on sender, log statistics
       Network<SenderGang<Rat, AlwaysOnSender<Rat>>,
         SenderGang<Rat, AlwaysOnSender<Rat>>> always_on_network( Rat( run_whiskers, trace ), run_prng, x, 1 );
-      always_on_data = always_on_network.run_simulation_bailout_logging( ticks_to_run, false );
+      always_on_data = always_on_network.run_simulation_bailout_logging( dynamic_tick_count, false );
       the_outcome.statistics.always_on_10_score += always_on_data.score_10;
       the_outcome.statistics.always_on_50_score += always_on_data.score_50;
       the_outcome.statistics.always_on_100_score += always_on_data.score;
@@ -105,7 +109,7 @@ Evaluator< WhiskerTree >::Outcome Evaluator<WhiskerTree>::evaluate_for_bailout( 
     // run a regilar sender, evaluate statistics
       Network<SenderGang<Rat, TimeSwitchedSender<Rat>>,
         SenderGang<Rat, TimeSwitchedSender<Rat>>> network1( Rat( run_whiskers, trace ), run_prng, x);
-      data = network1.run_simulation_bailout_logging( ticks_to_run, false );
+      data = network1.run_simulation_bailout_logging( dynamic_tick_count, false );
       the_outcome.statistics.regular_10_score += data.score_10;
       the_outcome.statistics.regular_50_score += data.score_50;
       the_outcome.statistics.regular_100_score += data.score;
