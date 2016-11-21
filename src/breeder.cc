@@ -217,7 +217,7 @@ double ActionImprover< T, A >::improve( A & action_to_improve )
 
   }
 
-  cout << "Chose " << action_to_improve.str() << " with score: " << score_to_beat_ << "(" << best_index << ")" << endl;
+  cout << "Chose " << best_index << " " << action_to_improve.str() << " with score: " << score_to_beat_ << endl;
   printf("==============================\n");
 
   return score_to_beat_;
