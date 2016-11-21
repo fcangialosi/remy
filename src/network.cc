@@ -99,7 +99,8 @@ BailoutLogging Network<Gang1Type, Gang2Type>::run_simulation_bailout_logging( co
   }
 
   bailout.score = _senders.utility();
-  bailout.queue =(double)(_link.get_largest_queue());
+  bailout.queue = (double)(_link.get_largest_queue());
+  bailout.queue_tick = (_link.get_largest_queue_tick() / duration);
 
   return bailout;
 }

@@ -82,12 +82,16 @@ void ActionImprover< T, A >:: evaluate_for_bailout(const vector<A> &replacements
                   data.always_on_queue = always_on_outcome.statistics.always_on_100_queue;
                   data.always_on_queue_10 = always_on_outcome.statistics.always_on_10_queue;
                   data.always_on_queue_50 = always_on_outcome.statistics.always_on_50_queue;
+                  data.always_on_queue_tick = always_on_outcome.statistics.always_on_queue_tick;
+                  data.always_on_time = always_on_outcome.time.count();
 
                   // queue statistics for regular senders
                   data.queue = outcome.statistics.regular_100_queue;
                   data.queue_10 = outcome.statistics.regular_10_queue;
                   data.queue_50 = outcome.statistics.regular_50_queue;
+                  data.queue_tick = outcome.statistics.regular_queue_tick;
                   data.time = outcome.time.count();
+
                   return make_pair( true, data ); },
                   eval_, test_replacement, tree_, carefulness ) );
             } else {
@@ -176,45 +180,43 @@ double ActionImprover< T, A >::improve( A & action_to_improve )
   //evaluate_replacements( replacements, scores, 1 );
   evaluate_for_bailout( replacements, early_scores, 1);
 
+  printf("==============================\n");
+  int index = 0;
+  int best_index = 0;
   for ( auto & x : early_scores ) {
-     const A & replacement( x.first );
-     const auto outcome( x.second.get() );
-     const bool was_new_evaluation( outcome.first );
-     const OutcomeData data(outcome.second );
-     const double score( data.score );
-     const double score_10( data.score_10 );
-     const double score_50( data.score_50 );
+    const A & replacement( x.first );
+    const auto outcome( x.second.get() );
+    const bool was_new_evaluation( outcome.first );
+    const OutcomeData data(outcome.second );
 
-     const double always_on_score( data.always_on_score );
-     const double always_on_score_10( data.always_on_score_10 );
-     const double always_on_score_50( data.always_on_score_50 );
+    printf("%d [%f] %f/%f/%f %f/%f/%f/%f [%f] %f/%f/%f %f/%f/%f/%f action=%s\n",
+        index,
+        data.time,
+        data.score_10, data.score_50, data.score,
+        data.queue_10, data.queue_50, data.queue, (data.queue_tick*100),
+        data.always_on_time,
+        data.always_on_score_10, data.always_on_score_50, data.always_on_score,
+        data.always_on_queue_10, data.always_on_queue_50, data.always_on_queue, (data.always_on_queue_tick*100),
+        replacement.str().c_str()
+    );
 
-     const double queue( data.queue );
-     const double queue_10( data.queue_10 );
-     const double queue_50( data.queue_50 );
+    /* should we cache this result? */
+    if ( was_new_evaluation ) {
+      eval_cache_early.insert( make_pair( replacement, data ) );
+    }
 
-     const double always_on_queue( data.always_on_queue );
-     const double always_on_queue_10( data.always_on_queue_10 );
-     const double always_on_queue_50( data.always_on_queue_50 );
-     const float time( data.time );
-     cout << "Action: " << replacement.str() << " with TIME: " << time << endl;
-     cout << "Regular sender scores-> 100%: " << score << " , 10%: " << score_10 << " , 50%: " << score_50 << endl;
-     cout << "Always on sender scores-> 100%: " << always_on_score << " , 10%: " << always_on_score_10 << " , 50%: " << always_on_score_50 << endl;
-     cout << "Regular sender queue sizes-> 100% " << queue << ", 10%: " << queue_10 << ", 50%: " << queue_50 << endl;
-     cout << "Always on sender queue sizes-> 100% " << always_on_queue << ", 10%: " << always_on_queue_10 << ", 50%: " << always_on_queue_50 << endl;
+    if ( data.score > score_to_beat_ ) {
+     score_to_beat_ = data.score;
+     action_to_improve = replacement;
+     best_index = index;
+    }
 
-     /* should we cache this result? */
-     if ( was_new_evaluation ) {
-       eval_cache_early.insert( make_pair( replacement, data ) );
-     }
+    index++;
 
-     if ( score > score_to_beat_ ) {
-      score_to_beat_ = score;
-      action_to_improve = replacement;
-     }
   }
 
-  cout << "Chose " << action_to_improve.str() << " with score: " << score_to_beat_ << endl;
+  cout << "Chose " << action_to_improve.str() << " with score: " << score_to_beat_ << "(" << best_index << ")" << endl;
+  printf("==============================\n");
 
   return score_to_beat_;
 }

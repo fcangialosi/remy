@@ -22,11 +22,14 @@ struct OutcomeData
   double queue;
   double queue_10;
   double queue_50;
+  double queue_tick;
 
   double always_on_queue_10;
   double always_on_queue_50;
   double always_on_queue;
+  double always_on_queue_tick;
   float time;
+  float always_on_time;
 
 };
 struct BreederOptions

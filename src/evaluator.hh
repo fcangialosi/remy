@@ -21,6 +21,7 @@ struct Statistics
   double always_on_10_queue;
   double always_on_50_queue;
   double always_on_100_queue;
+  double always_on_queue_tick;
 
   double regular_10_score;
   double regular_50_score;
@@ -28,6 +29,7 @@ struct Statistics
   double regular_10_queue;
   double regular_50_queue;
   double regular_100_queue;
+  double regular_queue_tick;
 };
 
 template <typename T>
@@ -41,8 +43,9 @@ public:
     std::chrono::milliseconds time;
     std::vector< std::pair< NetConfig, std::vector< std::pair< double, double > > > > throughputs_delays;
     T used_actions;
-    Statistics statistics;
-    Outcome() : score( 0 ), time( 0 ), throughputs_delays(), used_actions(), statistics() {}
+    Statistics statistics = {};
+    Outcome() : score( 0 ), time( 0 ), throughputs_delays(), used_actions(), statistics() {
+    }
 
     Outcome( const AnswerBuffers::Outcome & dna );
 

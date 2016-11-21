@@ -19,6 +19,7 @@ struct BailoutLogging {
   double queue_10;
   double queue_50;
   double queue;
+  double queue_tick;
 };
 
 class SimulationRunData; // from simulationresults.hh

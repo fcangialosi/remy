@@ -16,11 +16,12 @@ private:
 
   unsigned int _limit;
   unsigned int _largest_queue;
+  double _largest_queue_tick;
   bool _debug;
 public:
   Link( const double s_rate,
 	const unsigned int s_limit )
-    : _buffer(), _pending_packet( 1.0 / s_rate ), _limit( s_limit ), _largest_queue( 0 ), _debug(false) {}
+    : _buffer(), _pending_packet( 1.0 / s_rate ), _limit( s_limit ), _largest_queue( 0 ), _largest_queue_tick( 0 ), _debug(false) {}
 
   void accept( const Packet & p, const double & tickno ) noexcept {
     if ( _pending_packet.empty() ) {
@@ -30,6 +31,7 @@ public:
         _buffer.push_back( p );
         if ( (unsigned int)_buffer.size() > _largest_queue ) {
           _largest_queue = _buffer.size();
+          _largest_queue_tick = tickno;
         }
       }
     }
@@ -70,6 +72,10 @@ public:
   unsigned int get_queue_size( void ) const
   {
     return (unsigned int)(_buffer.size());
+  }
+  double get_largest_queue_tick( void ) const
+  {
+    return _largest_queue_tick;
   }
   void set_debug( const bool debug ) { _debug = debug; };
 };
