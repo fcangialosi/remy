@@ -83,6 +83,7 @@ void ActionImprover< T, A >:: evaluate_for_bailout(const vector<A> &replacements
                   data.always_on_queue_10 = always_on_outcome.statistics.always_on_10_queue;
                   data.always_on_queue_50 = always_on_outcome.statistics.always_on_50_queue;
                   data.always_on_queue_tick = always_on_outcome.statistics.always_on_queue_tick;
+                  data.always_on_bdp_at_max = always_on_outcome.statistics.always_on_bdp_at_max;
                   data.always_on_time = always_on_outcome.time.count();
 
                   // queue statistics for regular senders
@@ -90,6 +91,7 @@ void ActionImprover< T, A >:: evaluate_for_bailout(const vector<A> &replacements
                   data.queue_10 = outcome.statistics.regular_10_queue;
                   data.queue_50 = outcome.statistics.regular_50_queue;
                   data.queue_tick = outcome.statistics.regular_queue_tick;
+                  data.bdp_at_max = outcome.statistics.regular_bdp_at_max;
                   data.time = outcome.time.count();
 
                   return make_pair( true, data ); },
@@ -189,14 +191,14 @@ double ActionImprover< T, A >::improve( A & action_to_improve )
     const bool was_new_evaluation( outcome.first );
     const OutcomeData data(outcome.second );
 
-    printf("%d [%f] %f/%f/%f %f/%f/%f/%f [%f] %f/%f/%f %f/%f/%f/%f action=%s\n",
+    printf("%d [%f] %f/%f/%f %f/%f/%f/%f/%f [%f] %f/%f/%f %f/%f/%f/%f/%f action=%s\n",
         index,
         data.time,
         data.score_10, data.score_50, data.score,
-        data.queue_10, data.queue_50, data.queue, (data.queue_tick*100),
+        data.queue_10, data.queue_50, data.queue, (data.queue_tick*100), data.bdp_at_max,
         data.always_on_time,
         data.always_on_score_10, data.always_on_score_50, data.always_on_score,
-        data.always_on_queue_10, data.always_on_queue_50, data.always_on_queue, (data.always_on_queue_tick*100),
+        data.always_on_queue_10, data.always_on_queue_50, data.always_on_queue, (data.always_on_queue_tick*100), data.always_on_bdp_at_max,
         replacement.str().c_str()
     );
 

@@ -22,6 +22,7 @@ struct Statistics
   double always_on_50_queue;
   double always_on_100_queue;
   double always_on_queue_tick;
+  double always_on_bdp_at_max;
 
   double regular_10_score;
   double regular_50_score;
@@ -30,6 +31,7 @@ struct Statistics
   double regular_50_queue;
   double regular_100_queue;
   double regular_queue_tick;
+  double regular_bdp_at_max;
 };
 
 template <typename T>

@@ -23,11 +23,14 @@ struct OutcomeData
   double queue_10;
   double queue_50;
   double queue_tick;
+  double bdp_at_max;
 
   double always_on_queue_10;
   double always_on_queue_50;
   double always_on_queue;
   double always_on_queue_tick;
+  double always_on_bdp_at_max;
+
   float time;
   float always_on_time;
 

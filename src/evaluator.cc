@@ -103,6 +103,7 @@ Evaluator< WhiskerTree >::Outcome Evaluator<WhiskerTree>::evaluate_for_bailout( 
         the_outcome.statistics.always_on_50_queue = ((double)always_on_data.queue_50);
         the_outcome.statistics.always_on_100_queue = ((double)always_on_data.queue );
         the_outcome.statistics.always_on_queue_tick = always_on_data.queue_tick;
+        the_outcome.statistics.always_on_bdp_at_max = (x.link_ppt * x.delay);
       }
 
     } else {
@@ -120,6 +121,7 @@ Evaluator< WhiskerTree >::Outcome Evaluator<WhiskerTree>::evaluate_for_bailout( 
         the_outcome.statistics.regular_50_queue = ((double)data.queue_50);
         the_outcome.statistics.regular_100_queue = ((double)data.queue);
         the_outcome.statistics.regular_queue_tick = data.queue_tick;
+        the_outcome.statistics.regular_bdp_at_max = (x.link_ppt * x.delay);
       }
       the_outcome.score += data.score;
 
