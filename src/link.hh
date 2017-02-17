@@ -15,11 +15,11 @@ private:
   Delay _pending_packet;
 
   unsigned int _limit;
-
+  unsigned int _largest_queue;
 public:
   Link( const double s_rate,
 	const unsigned int s_limit )
-    : _buffer(), _pending_packet( 1.0 / s_rate ), _limit( s_limit ) {}
+    : _buffer(), _pending_packet( 1.0 / s_rate ), _limit( s_limit ), _largest_queue( 0 ) {}
 
   void accept( const Packet & p, const double & tickno ) noexcept {
     if ( _pending_packet.empty() ) {
@@ -27,6 +27,10 @@ public:
     } else {
       if ( _limit and _buffer.size() < _limit ) {
         _buffer.push_back( p );
+        if ( _buffer.size() > _largest_queue ) {
+          printf("THE BUFFER SIZE IS INCREASING FROM %u to %lu\n", _largest_queue, _buffer.size());
+          _largest_queue = _buffer.size();
+        }
       }
     }
   }
@@ -59,6 +63,10 @@ public:
     }
   }
 
+  unsigned int get_largest_queue( void ) const
+  {
+    return _largest_queue;
+  }
   unsigned int buffer_size( void ) const { return _buffer.size(); }
 };
 

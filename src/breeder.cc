@@ -176,7 +176,7 @@ double ActionImprover< T, A >::improve( A & action_to_improve )
 		cout << ">>> REMOVED=" << num_removed << endl;
 	}
 
-	unsigned long long maxll = ((unsigned long long)-1);
+	//unsigned long long maxll = ((unsigned long long)-1);
 
   /* find best replacement */
   evaluate_replacements( top_replacements, scores, 1 );
@@ -185,11 +185,11 @@ double ActionImprover< T, A >::improve( A & action_to_improve )
      const auto outcome( x.second.get() );
      const bool was_new_evaluation( std::get<0>(outcome) );
      const double score( std::get<1>(outcome) );
-		 const unsigned long long time_elapsed( std::get<2>(outcome) );
+		 //const unsigned long long time_elapsed( std::get<2>(outcome) );
 
-		 if (time_elapsed != (maxll)) {
-		   cout << "<<< " << time_elapsed << endl;
-		 } 
+		 //if (time_elapsed != (maxll)) {
+		 //  cout << "<<< " << time_elapsed << endl;
+		 //} 
      /* should we cache this result? */
      if ( was_new_evaluation ) {
        eval_cache_.insert( make_pair( replacement, score ) );

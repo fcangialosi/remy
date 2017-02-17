@@ -91,12 +91,6 @@ unsigned int Network<Gang1Type, Gang2Type>::run_simulation_until_queue_limit( co
 		   min( _delay.next_event_time( _tickno ),
 			_rec.next_event_time( _tickno ) ) );
 
-		/* DEBUG */
-		if (_link.buffer_size() > 0) {
-			std::cout << ">>> QSIZE=" << _link.buffer_size() << std::endl;
-		}
-		/* /DEBUG */
-
     if ( _tickno > duration || _link.buffer_size() >= max_queue) break;
     assert( _tickno < std::numeric_limits<double>::max() );
 

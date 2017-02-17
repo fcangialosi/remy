@@ -2,6 +2,10 @@
 
 #include "sendergang.hh"
 
+/* DEBUG */
+#include <iostream>
+/* /DEBUG */
+
 using namespace std;
 
 template <class SenderType, class SwitcherType>
